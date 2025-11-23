@@ -205,6 +205,53 @@
                         <textarea name="" id="" cols="0" rows="10"  placeholder="It is a demo Form" class="contact__input"></textarea>
                         <input type="button" value="Send" class="contact__button button">
                     </form>
+
+<div id="msg" style="display:none"></div>
+
+<script>
+const endpoint = 'https://script.google.com/macros/s/AKfycbzR1UUxUiezO6N-UyMd4seAvOXMekj7_GaclQM5gdqoFNv8tQ2vWBJvYuKm9Uh69W4f/exec';
+
+document.getElementById('feedbackForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form); // sends as multipart/form-data — usually avoids preflight
+
+  try {
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      body: fd,           // do NOT set Content-Type header — let browser set it
+      mode: 'cors',       // default, included for clarity
+      credentials: 'omit' // avoid sending cookies; keep anonymous
+    });
+
+    // If the response is not JSON (e.g., 302/HTML), handle gracefully
+    let text = await resp.text();
+    try {
+      const json = JSON.parse(text);
+      if (json.status === 'ok') {
+        showMsg('Feedback submitted');
+      } else {
+        showMsg('Submission failed: ' + (json.message || text));
+      }
+    } catch (err) {
+      // Not JSON — show raw response / status
+      showMsg('Unexpected response. HTTP ' + resp.status + ' — ' + text);
+    }
+
+  } catch (err) {
+    showMsg('Error submitting feedback: ' + err.toString());
+  }
+
+  form.reset();
+});
+
+function showMsg(t) {
+  const d = document.getElementById('msg');
+  d.style.display = 'block';
+  d.textContent = t;
+}
+</script>
+                    
                 </div>
             </section>
         </main>
@@ -228,4 +275,5 @@
         <script src="assets/js/main.js"></script>
     </body>
 </html>
+
 
