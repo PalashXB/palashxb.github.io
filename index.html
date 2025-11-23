@@ -204,7 +204,7 @@
                         <input type="email" name="email" placeholder="Email" class="contact__input" required>
                         <textarea name="message" id="" cols="0" rows="10"  placeholder="write here" class="contact__input" required></textarea>
                         <div id="msg" role="status" aria-live="polite"></div>
-                        <input type="submit" value="Send" class="contact__button button">
+                        <input id="submitBtn" type="submit" value="Send" class="contact__button button">
                         
                     </form>
 
@@ -212,7 +212,7 @@
                       <div id="overlay" class="overlay" aria-hidden="true">
                         <div style="text-align:center">
                           <div class="spinner" aria-hidden="true"></div>
-                          <div class="text">Sending feedback…</div>
+                          <div class="text" style="margin-top:10px; font-size:14px; color:#333; text-align:center;">Sending feedback…   </div>
                         </div>
                       </div>
                     
@@ -355,6 +355,7 @@
         <script src="assets/js/main.js"></script>
     </body>
 </html>
+
 
 
 
