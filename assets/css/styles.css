@@ -447,6 +447,35 @@ img{
   }
 }
 
+ /* message area */
+    #msg { max-width:480px; margin:12px auto; display:none; font-size:15px; }
+
+    /* spinner overlay */
+    .overlay {
+      display:none;
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.6);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    .spinner {
+      width:64px;
+      height:64px;
+      border:8px solid rgba(0,0,0,0.12);
+      border-top-color: rgba(0,0,0,0.6);
+      border-radius:50%;
+      animation: spin 0.9s linear infinite;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* optional small note under spinner */
+    .overlay .text { margin-top:10px; font-size:14px; color:#333; text-align:center; }
+
+
+
 @media screen and (min-width: 1024px){
   .bd-grid{
     margin-left: auto;
