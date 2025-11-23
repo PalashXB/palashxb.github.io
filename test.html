@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feedback Form</title>
+
+  <style>
+    form { max-width: 480px; margin: 20px auto; display: flex; flex-direction: column; gap: 10px; }
+    input, textarea, button { padding: 10px; font-size: 15px; }
+    #msg { display: none; margin: 20px auto; max-width: 480px; font-size: 16px; color: green; }
+  </style>
+</head>
+
+<body>
+
+  <form id="feedbackForm" action="https://script.google.com/macros/s/AKfycbzR1UUxUiezO6N-UyMd4seAvOXMekj7_GaclQM5gdqoFNv8tQ2vWBJvYuKm9Uh69W4f/exec" method="POST" target="hidden_iframe">
+    <input type="text" name="name" placeholder="Name" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <textarea name="message" placeholder="Your feedback" required></textarea>
+
+    <!-- Hidden fields for allowed device/browser info -->
+    <input type="hidden" name="userAgent" id="hf_userAgent">
+    <input type="hidden" name="platform" id="hf_platform">
+    <input type="hidden" name="language" id="hf_language">
+    <input type="hidden" name="timezone" id="hf_timezone">
+    <input type="hidden" name="screenWidth" id="hf_screenWidth">
+    <input type="hidden" name="screenHeight" id="hf_screenHeight">
+    <input type="hidden" name="referrer" id="hf_referrer">
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <!-- hidden iframe to receive Apps Script response -->
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
+
+  <div id="msg">Feedback submitted</div>
+
+  <script>
+    document.getElementById('hf_userAgent').value = navigator.userAgent || '';
+    document.getElementById('hf_platform').value = navigator.platform || '';
+    document.getElementById('hf_language').value = navigator.language || '';
+    document.getElementById('hf_timezone').value =
+      Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    document.getElementById('hf_screenWidth').value = screen.width || '';
+    document.getElementById('hf_screenHeight').value = screen.height || '';
+    document.getElementById('hf_referrer').value = document.referrer || '';
+
+    document.getElementById('feedbackForm').addEventListener('submit', function () {
+      document.getElementById('msg').style.display = 'block';
+    });
+  </script>
+
+</body>
+</html>
