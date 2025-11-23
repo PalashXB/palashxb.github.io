@@ -203,56 +203,134 @@
                         <input type="text" name="name" placeholder="Name"  class="contact__input" required>
                         <input type="email" name="email" placeholder="Email" class="contact__input" required>
                         <textarea name="message" id="" cols="0" rows="10"  placeholder="write here" class="contact__input" required></textarea>
-                        <div id="msg" style="display:none"></div>
+                        <div id="msg" role="status" aria-live="polite"></div>
                         <input type="submit" value="Send" class="contact__button button">
                         
                     </form>
 
-<div id="msg" style="display:none"></div>
-
+                     <!-- loading overlay -->
+                      <div id="overlay" class="overlay" aria-hidden="true">
+                        <div style="text-align:center">
+                          <div class="spinner" aria-hidden="true"></div>
+                          <div class="text">Sending feedback…</div>
+                        </div>
+                      </div>
+                    
 <script>
-const endpoint = 'https://script.google.com/macros/s/AKfycbzR1UUxUiezO6N-UyMd4seAvOXMekj7_GaclQM5gdqoFNv8tQ2vWBJvYuKm9Uh69W4f/exec';
 
-document.getElementById('feedbackForm').addEventListener('submit', async function(e){
-  e.preventDefault();
-  const form = e.target;
-  const fd = new FormData(form); // sends as multipart/form-data — usually avoids preflight
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzR1UUxUiezO6N-UyMd4seAvOXMekj7_GaclQM5gdqoFNv8tQ2vWBJvYuKm9Uh69W4f/exec';
 
-  try {
-    const resp = await fetch(endpoint, {
-      method: 'POST',
-      body: fd,           // do NOT set Content-Type header — let browser set it
-      mode: 'cors',       // default, included for clarity
-      credentials: 'omit' // avoid sending cookies; keep anonymous
-    });
+  // Timeout for fetch (ms)
+  const FETCH_TIMEOUT = 20000; // 20 seconds
 
-    // If the response is not JSON (e.g., 302/HTML), handle gracefully
-    let text = await resp.text();
-    try {
-      const json = JSON.parse(text);
-      if (json.status === 'ok') {
-        showMsg('Feedback submitted');
-      } else {
-        showMsg('Submission failed: ' + (json.message || text));
-      }
-    } catch (err) {
-      // Not JSON — show raw response / status
-      showMsg('Unexpected response. HTTP ' + resp.status + ' — ' + text);
-    }
-
-  } catch (err) {
-    showMsg('Error submitting feedback: ' + err.toString());
+  // Helper to gather allowed client info
+  function getClientInfo() {
+    const ua = navigator.userAgent || '';
+    const platform = navigator.platform || '';
+    const language = navigator.language || (navigator.languages && navigator.languages[0]) || '';
+    const timezone = (Intl && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions ? Intl.DateTimeFormat().resolvedOptions().timeZone : '');
+    const screenWidth = (screen && screen.width) ? String(screen.width) : '';
+    const screenHeight = (screen && screen.height) ? String(screen.height) : '';
+    const referrer = document.referrer || '';
+    return { ua, platform, language, timezone, screenWidth, screenHeight, referrer };
   }
 
-  form.reset();
-});
+  // UI helpers
+  function showMsg(text, isError=false) {
+    const el = document.getElementById('msg');
+    el.textContent = text;
+    el.style.color = isError ? 'crimson' : 'green';
+    el.style.display = 'block';
+  }
+  function hideMsg() {
+    const el = document.getElementById('msg');
+    el.style.display = 'none';
+  }
+  function showOverlay() {
+    const o = document.getElementById('overlay');
+    o.style.display = 'flex';
+    o.setAttribute('aria-hidden', 'false');
+  }
+  function hideOverlay() {
+    const o = document.getElementById('overlay');
+    o.style.display = 'none';
+    o.setAttribute('aria-hidden', 'true');
+  }
 
-function showMsg(t) {
-  const d = document.getElementById('msg');
-  d.style.display = 'block';
-  d.textContent = t;
-}
+  // Main submit handler
+  document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    hideMsg();
+
+    const form = e.target;
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Build FormData
+    const fd = new FormData(form);
+    const info = getClientInfo();
+    fd.append('userAgent', info.ua);
+    fd.append('platform', info.platform);
+    fd.append('language', info.language);
+    fd.append('timezone', info.timezone);
+    fd.append('screenWidth', info.screenWidth);
+    fd.append('screenHeight', info.screenHeight);
+    fd.append('referrer', info.referrer);
+
+    // Disable button and show spinner
+    submitBtn.disabled = true;
+    showOverlay();
+
+    // Setup abort controller for timeout
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+    try {
+      const resp = await fetch(ENDPOINT, {
+        method: 'POST',
+        body: fd,           // DO NOT set Content-Type manually
+        mode: 'cors',
+        credentials: 'omit',
+        signal: controller.signal
+      });
+
+      clearTimeout(timer);
+
+      const text = await resp.text();
+      let json = null;
+      try { json = JSON.parse(text); } catch (_) { json = null; }
+
+      if (json && json.status === 'ok') {
+        showMsg('Feedback submitted');
+        form.reset();
+      } else if (json && json.status === 'error') {
+        showMsg('Submission failed: ' + (json.message || 'unknown'), true);
+      } else {
+        // Non-JSON response: treat 2xx as success, otherwise error
+        if (resp.ok) {
+          showMsg('Feedback submitted');
+          form.reset();
+        } else {
+          showMsg('Submission failed. HTTP ' + resp.status + ' — ' + text, true);
+        }
+      }
+    } catch (err) {
+      // Distinguish timeout vs other errors
+      if (err.name === 'AbortError') {
+        showMsg('Request timed out. Please try again.', true);
+      } else {
+        showMsg('Error submitting feedback: ' + err.toString(), true);
+      }
+    } finally {
+      // always re-enable UI
+      clearTimeout(timer);
+      hideOverlay();
+      submitBtn.disabled = false;
+    }
+  });
 </script>
+
+
+                    
                     
                 </div>
             </section>
@@ -277,6 +355,7 @@ function showMsg(t) {
         <script src="assets/js/main.js"></script>
     </body>
 </html>
+
 
 
 
